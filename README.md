@@ -25,4 +25,12 @@ What **CAN'T** be done:
 
 ---
 
-TODO: Add more
+## TODO list
+
+- [ ] Add more docstrings and comments
+- [ ] Add more to readme (stuff like installation and usage)
+- [ ] remove test code
+- [ ] add some examples (and maybe supply scenes)
+- [ ] make sure it works flawlessly (check the models especially)
+- [ ] add `setup.py` or `pyproject.toml`
+- [ ] publish to PyPi with GH Actions
