@@ -12,8 +12,8 @@ This includes actions such as
 - changing the map
 - controlling variables of a fire engine (such as the height of the ladder)
 - start a fire (in FwESI)
-- show/hide elements
 - check state of door
+- show/hide elements
 
 The last action is still quite buggy with smoke in the latest tested version (1.10.1) and needs to be fixed by the FwESI developers.
 Actions like video control are also a bit unstable.
