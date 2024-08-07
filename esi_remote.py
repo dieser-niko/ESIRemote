@@ -3,6 +3,7 @@ import time
 import requests
 from typing import List, Union
 import models
+from filter_list import FilterList
 
 
 class ESIRemote:
@@ -11,9 +12,9 @@ class ESIRemote:
         self.port = port
         self.session = session if session else requests.Session()
         self.autoupdate = autoupdate
-        self._save_files: List[models.Save] = []
+        self._save_files: List[models.Save] = FilterList()
         self._active: Union[models.Active, None] = None
-        self._operatoractors: List[models.OperatorActor] = []
+        self._operatoractors: FilterList[models.OperatorActor] = FilterList()
         self.update_saves()
         self.update_active()
         self.update_operatoractors()
@@ -69,11 +70,11 @@ class ESIRemote:
             return
 
         for actor in self.operatoractors:
-            if actor.updates:
-                response = self._api_put("operatoractors", actor.updates)
+            if actor.commit_changes:
+                response = self._api_put("operatoractors", actor.commit_changes)
                 if not response == {"answer": "actor has been updated"}:
                     raise ValueError(f"Answer from server not as expected: {repr(response)}")
-                actor.updates = dict()
+                actor.commit_changes = dict()
 
         self.update_operatoractors()
 
@@ -86,7 +87,7 @@ class ESIRemote:
             actor.commit_callback = self._commit_actor
 
     @property
-    def operatoractors(self) -> List[models.OperatorActor]:
+    def operatoractors(self) -> FilterList[models.OperatorActor]:
         return self._operatoractors
 
     def update(self):
@@ -108,14 +109,14 @@ if __name__ == "__main__":
     remote = ESIRemote()
     remote.save_files[9].sub_saves[0].load()
     print(remote.active)
-    fahrzeug = remote.operatoractors[2]
-    remote.operatoractors[1].is_visible = False
+    fahrzeug = remote.operatoractors.by_attributes(type="emergency_vehicle").first()
+    remote.operatoractors[0].is_visible = False
     enums = remote.operatoractors[0].property_enums[0].all_values
     for enum in enums:
         if enum.enum_field_value == "CLOSED":
             break
     remote.operatoractors[0].property_enums[0].current_value = enum
-    fahrzeug.properties[0].value = False
+    fahrzeug.properties.by_attributes(name="DP_ExtendSupports").value = False
     fahrzeug.properties[1].value = 0
     fahrzeug.properties[2].value = 0
     fahrzeug.properties[3].value = 0

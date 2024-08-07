@@ -2,6 +2,8 @@ from typing import List, Union
 import re
 import json
 
+from filter_list import FilterList
+
 variable_pattern = re.compile(r'(?<!^)(?=[A-Z])')
 
 
@@ -14,7 +16,7 @@ def commit(force: bool = False):
 
 
 def check_updates(items: List["Base"]):
-    commit_changes = list()
+    commit_changes = FilterList()
     for item in items:
         if item.commit_changes:
             commit_changes.append(item.commit_changes)
@@ -23,7 +25,7 @@ def check_updates(items: List["Base"]):
 
 def get_updated_values(old_items: List["Base"], new_items: list, object_parser, attribute_name: str = "name"):
     variable_name = variable_pattern.sub("_", attribute_name).lower()
-    new_values = list()
+    new_values = FilterList()
     old_items_dict = {getattr(item, variable_name): item for item in old_items}
     for item in new_items:
         new_values.append(old_items_dict.get(item[attribute_name], object_parser(item)))
@@ -35,6 +37,18 @@ class Base:
     def __init__(self, *args, **kwargs):
         self.commit_changes = dict()
         self.commit_callback = commit
+
+    def __repr__(self):
+        attributes = list()
+        for key, value in self.__dict__.items():
+            if not key.startswith("_") or key.startswith("__"):
+                continue
+            value = repr(value)
+            if len(value) > 50:
+                value = "..."
+            attributes.append(f"{key[1:]}={value}")
+        string = ", ".join(attributes)
+        return f"{self.__class__.__name__}({string})"
 
     @classmethod
     def parse(cls, item):
@@ -243,7 +257,7 @@ class PropertyEnum(Base):
         return cls(**prepare_variables({
             **item,
             **{"currentValue": enum_fields[item["currentValue"]["enumFieldId"]]},
-            **{"allValues": list(enum_fields.values())}  # by using **{} we can replace keys/values from item
+            **{"allValues": FilterList(enum_fields.values())}  # by using **{} we can replace keys/values from item
         }))
 
     def update_values(self, item):
@@ -264,7 +278,7 @@ class PropertyEnum(Base):
         return super().update_values({
             **item,
             **{"currentValue": new_enums[item["currentValue"]["enumFieldId"]]},
-            **{"allValues": list(new_enums.values())}
+            **{"allValues": FilterList(new_enums.values())}
         })
 
     @property
@@ -348,10 +362,12 @@ class OperatorActor(Base):
     def parse(cls, item):
         actor = cls(**prepare_variables({
             **item,
-            **{"properties": [Property.parse(_property) for _property in item["properties"]]},
-            **{"propertyArrays": [PropertyArray.parse(property_array) for property_array in item["propertyArrays"]]},
-            **{"propertyEnums": [PropertyEnum.parse(property_enum) for property_enum in item["propertyEnums"]]},
-            **{"actions": [Action.parse(action) for action in item["actions"]]}
+            **{"properties": FilterList([Property.parse(_property) for _property in item["properties"]])},
+            **{"propertyArrays": FilterList(
+                [PropertyArray.parse(property_array) for property_array in item["propertyArrays"]])},
+            **{"propertyEnums": FilterList(
+                [PropertyEnum.parse(property_enum) for property_enum in item["propertyEnums"]])},
+            **{"actions": FilterList([Action.parse(action) for action in item["actions"]])}
         }))
         for item in actor.properties + actor.property_arrays + actor.property_enums + actor.actions:
             item.commit_callback = actor.commit
