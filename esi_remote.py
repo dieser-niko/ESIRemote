@@ -7,14 +7,14 @@ from filter_list import FilterList
 
 
 class ESIRemote:
-    def __init__(self, host="http://127.0.0.1", port=2132, session: requests.Session = None, autoupdate=True):
+    def __init__(self, host="http://127.0.0.1", port=2132, session: requests.Session = None, autocommit=True):
         self.host = host
         self.port = port
         self.session = session if session else requests.Session()
-        self.autoupdate = autoupdate
-        self._save_files: List[models.Save] = FilterList()
+        self.autocommit = autocommit
+        self._save_files: Union[List[models.Save], FilterList] = FilterList()
         self._active: Union[models.Active, None] = None
-        self._operatoractors: FilterList[models.OperatorActor] = FilterList()
+        self._operatoractors: Union[List[models.OperatorActor], FilterList] = FilterList()
         self.update_saves()
         self.update_active()
         self.update_operatoractors()
@@ -30,7 +30,7 @@ class ESIRemote:
         Goes through each save and checks if it has an update.
         If yes, it will put the data to the server and stops iterating.
         """
-        if not (force or self.autoupdate):
+        if not (force or self.autocommit):
             return
         committed = False
         for save in self.save_files:
@@ -53,7 +53,7 @@ class ESIRemote:
 
     @property
     def save_files(self) -> List[models.Save]:
-        return self._save_files
+        return FilterList(self._save_files)
 
     def update_active(self):
         if self._active:
@@ -66,7 +66,7 @@ class ESIRemote:
         return self._active
 
     def _commit_actor(self, force: bool = False):
-        if not (force or self.autoupdate):
+        if not (force or self.autocommit):
             return
 
         for actor in self.operatoractors:
@@ -87,12 +87,12 @@ class ESIRemote:
             actor.commit_callback = self._commit_actor
 
     @property
-    def operatoractors(self) -> FilterList[models.OperatorActor]:
+    def operatoractors(self) -> Union[List[models.OperatorActor], FilterList]:
         return self._operatoractors
 
-    def update(self):
+    def commit(self):
         """
-        Triggers updates for OperatorActors.
+        Uploads/commits changes and updates the objects for OperatorActors.
         """
         self._commit_actor()
         self.update_operatoractors()
@@ -109,14 +109,11 @@ if __name__ == "__main__":
     remote = ESIRemote()
     remote.save_files[9].sub_saves[0].load()
     print(remote.active)
-    fahrzeug = remote.operatoractors.by_attributes(type="emergency_vehicle").first()
+    fahrzeug = remote.operatoractors.by_attribute(type="emergency_vehicle").first()
     remote.operatoractors[0].is_visible = False
-    enums = remote.operatoractors[0].property_enums[0].all_values
-    for enum in enums:
-        if enum.enum_field_value == "CLOSED":
-            break
+    enum = remote.operatoractors[0].property_enums[0].all_values.by_attribute(enum_field_value="CLOSED").first()
     remote.operatoractors[0].property_enums[0].current_value = enum
-    fahrzeug.properties.by_attributes(name="DP_ExtendSupports").value = False
+    fahrzeug.properties.by_attribute(name="DP_ExtendSupports").value = False
     fahrzeug.properties[1].value = 0
     fahrzeug.properties[2].value = 0
     fahrzeug.properties[3].value = 0

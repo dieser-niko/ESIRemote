@@ -8,7 +8,7 @@ class FilterList(list):
     def __repr__(self):
         return f"FilterList({repr(list(self))})"
 
-    def by_attributes(self, **kwargs) -> FilterList:
+    def by_attribute(self, **kwargs) -> FilterList:
         result = []
         for item in self:
             if all([getattr(item, key) == value for key, value in kwargs.items()]):
