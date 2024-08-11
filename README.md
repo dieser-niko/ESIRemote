@@ -29,7 +29,7 @@ What **CAN'T** be done:
 
 - [ ] Add more docstrings and comments
 - [ ] Add more to readme (stuff like installation and usage)
-- [ ] Add more helper functions (like search by ID, name, type, etc)
+- [x] Add more helper functions (like search by ID, name, type, etc)
   - Maybe do something like a custom list object with a function called "search_by_attribute" or something
 - [ ] remove test code
 - [ ] add some examples (and maybe supply scenes)

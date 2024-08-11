@@ -2,6 +2,8 @@ from typing import List, Union
 import re
 import json
 
+from filter_list import FilterList
+
 variable_pattern = re.compile(r'(?<!^)(?=[A-Z])')
 
 
@@ -14,7 +16,7 @@ def commit(force: bool = False):
 
 
 def check_updates(items: List["Base"]):
-    commit_changes = list()
+    commit_changes = FilterList()
     for item in items:
         if item.commit_changes:
             commit_changes.append(item.commit_changes)
@@ -23,7 +25,7 @@ def check_updates(items: List["Base"]):
 
 def get_updated_values(old_items: List["Base"], new_items: list, object_parser, attribute_name: str = "name"):
     variable_name = variable_pattern.sub("_", attribute_name).lower()
-    new_values = list()
+    new_values = FilterList()
     old_items_dict = {getattr(item, variable_name): item for item in old_items}
     for item in new_items:
         new_values.append(old_items_dict.get(item[attribute_name], object_parser(item)))
@@ -32,9 +34,24 @@ def get_updated_values(old_items: List["Base"], new_items: list, object_parser, 
 
 
 class Base:
+    """
+    This model should not be created by hand.
+    """
     def __init__(self, *args, **kwargs):
         self.commit_changes = dict()
         self.commit_callback = commit
+
+    def __repr__(self):
+        attributes = list()
+        for key, value in self.__dict__.items():
+            if not key.startswith("_") or key.startswith("__"):
+                continue
+            value = repr(value)
+            if len(value) > 50:
+                value = "..."
+            attributes.append(f"{key[1:]}={value}")
+        string = ", ".join(attributes)
+        return f"{self.__class__.__name__}({string})"
 
     @classmethod
     def parse(cls, item):
@@ -58,14 +75,15 @@ class Active(Base):
         self._scenario_name = scenario_name
 
     def __repr__(self):
+        # TODO: Check if this repr is actually better than the one in the Base
         return f"Active(scenario_id={self.scenario_id}, scenario_name={self.scenario_name})"
 
     @property
-    def scenario_id(self):
+    def scenario_id(self) -> int:
         return self._scenario_id
 
     @property
-    def scenario_name(self):
+    def scenario_name(self) -> str:
         return self._scenario_name
 
 
@@ -77,9 +95,10 @@ class Save(Base):
         self._scenario_name = scenario_name
         self._category_name = category_name
         self._absolute_path = absolute_path
-        self._sub_saves = sub_saves
+        self._sub_saves: Union[List['Save'], FilterList] = FilterList(sub_saves)
 
     def __repr__(self):
+        # TODO: Compare with Base
         return (f"Save(scenario_id={self._scenario_id}, "
                 f"scenario_name={self._scenario_name}, "
                 f"category_name={self._category_name}, "
@@ -110,22 +129,22 @@ class Save(Base):
         self.commit_callback(force=force)
 
     @property
-    def scenario_id(self):
+    def scenario_id(self) -> int:
         return self._scenario_id
 
     @property
-    def scenario_name(self):
+    def scenario_name(self) -> str:
         return self._scenario_name
 
-    def category_name(self):
+    def category_name(self) -> str:
         return self._category_name
 
     @property
-    def absolute_path(self):
+    def absolute_path(self) -> str:
         return self._absolute_path
 
     @property
-    def sub_saves(self):
+    def sub_saves(self) -> Union[List['Save'], FilterList]:
         return self._sub_saves
 
     def load(self, force_commit=True):
@@ -165,38 +184,42 @@ class Property(Base):
         self._step_size = step_size
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         return self._display_name
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def type(self):
+    def type(self) -> type:
         return self._type
 
     @property
-    def value(self):
+    def value(self) -> Union[bool, str, int, float]:
         return self._value
 
     @value.setter
     def value(self, value):
+        # automatically converts the value to the pre-set type
         self._value = self.type(value)
         self.commit_changes["value"] = json.dumps(self._value)
         self.commit_changes["name"] = self.name  # has to be included
         self.commit()
 
     @property
-    def min_value(self):
+    # min_value can only be an int, even if the actual value might be a bool due to an API limitation
+    def min_value(self) -> int:
         return self._min_value
 
     @property
-    def max_value(self):
+    # max_value can only be an int, even if the actual value might be a bool due to an API limitation
+    def max_value(self) -> int:
         return self._max_value
 
     @property
-    def step_size(self):
+    # step_size can only be an int, even if the actual value might be a bool due to an API limitation
+    def step_size(self) -> int:
         return self._step_size
 
 
@@ -207,10 +230,11 @@ class PropertyArray(Base):
     """
 
     def __init__(self, **kwargs):
-        print("PropertyArrays are not implemented yet")
         super().__init__()
         for key, value in kwargs.items():
             setattr(self, key, value)
+        # I do want to get notified when PropertyArrays is being initialized
+        raise NotImplementedError("PropertyArrays are not implemented yet")
 
 
 class EnumField(Base):
@@ -220,11 +244,11 @@ class EnumField(Base):
         self._enum_field_value = enum_field_value
 
     @property
-    def enum_field_id(self):
+    def enum_field_id(self) -> int:
         return self._enum_field_id
 
     @property
-    def enum_field_value(self):
+    def enum_field_value(self) -> str:
         return self._enum_field_value
 
 
@@ -234,7 +258,7 @@ class PropertyEnum(Base):
         self._name = name
         self._type = type
         self._display_name = display_name
-        self._all_values = all_values
+        self._all_values: Union[List[EnumField], FilterList] = FilterList(all_values)
         self._current_value = current_value
 
     @classmethod
@@ -243,7 +267,7 @@ class PropertyEnum(Base):
         return cls(**prepare_variables({
             **item,
             **{"currentValue": enum_fields[item["currentValue"]["enumFieldId"]]},
-            **{"allValues": list(enum_fields.values())}  # by using **{} we can replace keys/values from item
+            **{"allValues": FilterList(enum_fields.values())}  # by using **{} we can replace keys/values from item
         }))
 
     def update_values(self, item):
@@ -264,27 +288,28 @@ class PropertyEnum(Base):
         return super().update_values({
             **item,
             **{"currentValue": new_enums[item["currentValue"]["enumFieldId"]]},
-            **{"allValues": list(new_enums.values())}
+            **{"allValues": FilterList(new_enums.values())}
         })
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def type(self):
+    # TODO: Check if this type is similar to the Property.type value
+    def type(self) -> str:
         return self._type
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         return self._display_name
 
     @property
-    def all_values(self):
+    def all_values(self) -> Union[List[EnumField], FilterList]:
         return self._all_values
 
     @property
-    def current_value(self):
+    def current_value(self) -> EnumField:
         return self._current_value
 
     @current_value.setter
@@ -308,15 +333,15 @@ class Action(Base):
         self._button_name = button_name
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         return self._display_name
 
     @property
-    def button_name(self):
+    def button_name(self) -> str:
         return self._button_name
 
     def trigger(self):
@@ -339,19 +364,21 @@ class OperatorActor(Base):
         self._id = id
         self._is_visible = is_visible
         self._type = type
-        self._properties = properties
-        self._property_arrays = property_arrays
-        self._property_enums = property_enums
-        self._actions = actions
+        self._properties: Union[List[Property], FilterList] = FilterList(properties)
+        self._property_arrays: Union[List[PropertyArray], FilterList] = FilterList(property_arrays)
+        self._property_enums: Union[List[PropertyEnum], FilterList] = FilterList(property_enums)
+        self._actions: Union[List[Action], FilterList] = FilterList(actions)
 
     @classmethod
     def parse(cls, item):
         actor = cls(**prepare_variables({
             **item,
-            **{"properties": [Property.parse(_property) for _property in item["properties"]]},
-            **{"propertyArrays": [PropertyArray.parse(property_array) for property_array in item["propertyArrays"]]},
-            **{"propertyEnums": [PropertyEnum.parse(property_enum) for property_enum in item["propertyEnums"]]},
-            **{"actions": [Action.parse(action) for action in item["actions"]]}
+            **{"properties": FilterList([Property.parse(_property) for _property in item["properties"]])},
+            **{"propertyArrays": FilterList(
+                [PropertyArray.parse(property_array) for property_array in item["propertyArrays"]])},
+            **{"propertyEnums": FilterList(
+                [PropertyEnum.parse(property_enum) for property_enum in item["propertyEnums"]])},
+            **{"actions": FilterList([Action.parse(action) for action in item["actions"]])}
         }))
         for item in actor.properties + actor.property_arrays + actor.property_enums + actor.actions:
             item.commit_callback = actor.commit
@@ -401,39 +428,39 @@ class OperatorActor(Base):
         })
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self._id
 
     @property
-    def is_visible(self):
+    def is_visible(self) -> bool:
         return self._is_visible
 
     @is_visible.setter
     def is_visible(self, value):
-        self._is_visible = value
-        self.commit_changes["isVisible"] = value
+        self._is_visible = bool(value)
+        self.commit_changes["isVisible"] = self._is_visible
         self.commit()
 
     @property
-    def type(self):
+    def type(self) -> str:
         return self._type
 
     @property
-    def properties(self):
+    def properties(self) -> Union[List[Property], FilterList]:
         return self._properties
 
     @property
-    def property_arrays(self):
+    def property_arrays(self) -> Union[List[PropertyArray], FilterList]:
         return self._property_arrays
 
     @property
-    def property_enums(self):
+    def property_enums(self) -> Union[List[PropertyEnum], FilterList]:
         return self._property_enums
 
     @property
-    def actions(self):
+    def actions(self) -> Union[List[Action], FilterList]:
         return self._actions
