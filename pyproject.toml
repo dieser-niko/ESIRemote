@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ESIRemote"
+version = "0.1"
+dependencies = [
+  "requests",
+]
+requires-python = ">=3.9"
+authors = [
+  { name = "@dieserniko", email = "hello@dieserniko.link" }
+]
+description = "Python library for remote controlling the environment in FwESI"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = {file = "LICENSE"}
+keywords = ["fwesi", "api", "wrapper"]
+
+[project.urls]
+Homepage = "https://github.com/dieser-niko/ESIRemote"
+Repository = "https://github.com/dieser-niko/ESIRemote"
+Issues = "https://github.com/dieser-niko/ESIRemote/issues"
