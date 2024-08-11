@@ -36,3 +36,4 @@ What **CAN'T** be done:
 - [ ] make sure it works flawlessly (check the models especially)
 - [ ] add `setup.py` or `pyproject.toml`
 - [ ] publish to PyPi with GH Actions
+- [ ] add unittests
