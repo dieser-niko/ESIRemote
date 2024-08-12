@@ -2,7 +2,7 @@ import time
 
 import requests
 from typing import List, Union
-import .models
+from .models import Save, Active, OperatorActor, get_updated_values
 from .filter_list import FilterList
 
 
@@ -12,9 +12,9 @@ class ESIRemote:
         self.port = port
         self.session = session if session else requests.Session()
         self.autocommit = autocommit
-        self._save_files: Union[List[models.Save], FilterList] = FilterList()
-        self._active: Union[models.Active, None] = None
-        self._operatoractors: Union[List[models.OperatorActor], FilterList] = FilterList()
+        self._save_files: Union[List[Save], FilterList] = FilterList()
+        self._active: Union[Active, None] = None
+        self._operatoractors: Union[List[OperatorActor], FilterList] = FilterList()
         self.update_saves()
         self.update_active()
         self.update_operatoractors()
@@ -44,25 +44,25 @@ class ESIRemote:
             save.commit_changes = {}
 
     def update_saves(self):
-        self._save_files = models.get_updated_values(self._save_files,
-                                                     self._api_get("save-files"),
-                                                     models.Save.parse,
-                                                     "absolutePath")
+        self._save_files = get_updated_values(self._save_files,
+                                              self._api_get("save-files"),
+                                              Save.parse,
+                                              "absolutePath")
         for save in self._save_files:
             save.commit_callback = self._commit_save
 
     @property
-    def save_files(self) -> List[models.Save]:
+    def save_files(self) -> List[Save]:
         return FilterList(self._save_files)
 
     def update_active(self):
         if self._active:
             self._active.update_values(self._api_get("save-files/active"))
         else:
-            self._active = models.Active.parse(self._api_get("save-files/active"))
+            self._active = Active.parse(self._api_get("save-files/active"))
 
     @property
-    def active(self) -> models.Active:
+    def active(self) -> Active:
         return self._active
 
     def _commit_actor(self, force: bool = False):
@@ -79,15 +79,15 @@ class ESIRemote:
         self.update_operatoractors()
 
     def update_operatoractors(self):
-        self._operatoractors = models.get_updated_values(self._operatoractors,
-                                                         self._api_get("operatoractors")["operatorActors"],
-                                                         models.OperatorActor.parse,
-                                                         "id")
+        self._operatoractors = get_updated_values(self._operatoractors,
+                                                  self._api_get("operatoractors")["operatorActors"],
+                                                  OperatorActor.parse,
+                                                  "id")
         for actor in self.operatoractors:
             actor.commit_callback = self._commit_actor
 
     @property
-    def operatoractors(self) -> Union[List[models.OperatorActor], FilterList]:
+    def operatoractors(self) -> Union[List[OperatorActor], FilterList]:
         return self._operatoractors
 
     def commit(self):
