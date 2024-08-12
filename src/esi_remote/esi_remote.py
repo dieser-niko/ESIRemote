@@ -2,8 +2,8 @@ import time
 
 import requests
 from typing import List, Union
-import models
-from filter_list import FilterList
+import .models
+from .filter_list import FilterList
 
 
 class ESIRemote:

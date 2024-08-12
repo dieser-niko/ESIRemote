@@ -2,7 +2,7 @@ from typing import List, Union
 import re
 import json
 
-from filter_list import FilterList
+from .filter_list import FilterList
 
 variable_pattern = re.compile(r'(?<!^)(?=[A-Z])')
 
