@@ -34,6 +34,6 @@ What **CAN'T** be done:
 - [ ] remove test code
 - [ ] add some examples (and maybe supply scenes)
 - [ ] make sure it works flawlessly (check the models especially)
-- [ ] add `setup.py` or `pyproject.toml`
+- [x] add `setup.py` or `pyproject.toml`
 - [ ] publish to PyPi with GH Actions
 - [ ] add unittests
