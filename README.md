@@ -2,14 +2,10 @@
 
 A Python library to remotely control the environment in [FwESI](https://fwesi.de/)
 
-## Installation
-
-ESIRemote is still in early development, but can already be installed with using PyPi:
-```console
-pip install esiremote
-```
-
 ## Functionality
+
+### FwESI
+<details><summary>expand</summary>
 
 FwESI has a remote control (basically a local web server) where the user can control the application without having to interact with the computer itself.
 
@@ -27,10 +23,41 @@ What **CAN'T** be done:
 - read/change coordinates of elements (like the user himself)
 - get a livestream of the situation
 - detect button presses (there are no buttons)
+</details>
+
+### ESIRemote
+The library automatically parses the available objects (also called OperatorActors), parameters and save files as Python objects.
+
+By default, ESIRemote allows the user to modify the attributes of these objects.
+Changes are applied automatically, but this can be turned off.
+
+Anything available on the remote server can be used with this library.
+
+
+## Installation
+
+ESIRemote is still in early development, but can already be installed using PyPi:
+```console
+pip install esiremote
+```
+
+## Quick Start
+Check out the (TODO) examples directory to get an idea of how you can use ESIRemote.
+
+Before you can use this library, make sure the remote server is enabled. You can enable it by default in the settings.
+
+Also make sure you have objects with the remote option enabled.
+```python3
+from esiremote import ESIRemote
+
+remote = ESIRemote()
+for operatoractor in remote.operatoractors:
+    print(operatoractor.name)
+```
+This little example lists all elements available. 
 
 ---
-
-## TODO list
+<details><summary>TODO list</summary>
 
 - [ ] Add more docstrings and comments
 - [ ] Add more to readme (stuff like installation and usage)
@@ -40,5 +67,7 @@ What **CAN'T** be done:
 - [ ] add some examples (and maybe supply scenes)
 - [ ] make sure it works flawlessly (check the models especially)
 - [x] add `setup.py` or `pyproject.toml`
-- [ ] publish to PyPi with GH Actions
+- [x] publish to PyPi with GH Actions
 - [ ] add unittests
+- [ ] Feature: load external save file (might not work at all)
+</details>
