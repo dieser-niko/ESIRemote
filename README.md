@@ -2,15 +2,20 @@
 
 A Python library to remotely control the environment in [FwESI](https://fwesi.de/)
 
-This library is still in early development, but can already be used with some modifications.
+## Installation
+
+ESIRemote is still in early development, but can already be installed with using PyPi:
+```console
+pip install esiremote
+```
 
 ## Functionality
 
 FwESI has a remote control (basically a local web server) where the user can control the application without having to interact with the computer itself.
 
 This includes actions such as
-- changing the map
-- controlling variables of a fire engine (such as the height of the ladder)
+- loading save file/sub save
+- controlling variables of a fire engine (such as the height and length of the ladder)
 - start a fire (in FwESI)
 - check state of door
 - show/hide elements
