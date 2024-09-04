@@ -36,7 +36,7 @@ Anything available on the remote server can be used with this library.
 
 ## Installation
 
-ESIRemote is still in early development, but can already be installed using PyPi:
+ESIRemote is still in early development, but can already be installed using PyPI:
 ```console
 pip install esiremote
 ```
@@ -60,7 +60,7 @@ This little example lists all elements available.
 <details><summary>TODO list</summary>
 
 - [ ] Add more docstrings and comments
-- [ ] Add more to readme (stuff like installation and usage)
+- [x] Add more to readme (stuff like installation and usage)
 - [x] Add more helper functions (like search by ID, name, type, etc)
   - Maybe do something like a custom list object with a function called "search_by_attribute" or something
 - [ ] remove test code
