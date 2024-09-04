@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Tuple
 import re
 import json
 
@@ -8,14 +8,26 @@ variable_pattern = re.compile(r'(?<!^)(?=[A-Z])')
 
 
 def prepare_variables(item: dict) -> dict:
+    """
+    Makes sure that the variables/attribute names are formatted correctly.
+    Mostly involves adding an underscore and converting the name to snake case.
+    """
     return {variable_pattern.sub("_", name).lower(): item[name] for name in item}
 
 
 def commit(force: bool = False):
+    """
+    Default callback function. Should not get triggered at any point.
+    """
     raise NotImplementedError(f"commit(force={force}) needs to be replaced by a function")
 
 
 def check_updates(items: List["Base"]):
+    """
+    Collects all commit changes.
+    :param items: list of items to collect from
+    :returns: commit changes
+    """
     commit_changes = FilterList()
     for item in items:
         if item.commit_changes:
@@ -24,6 +36,7 @@ def check_updates(items: List["Base"]):
 
 
 def get_updated_values(old_items: List["Base"], new_items: list, object_parser, attribute_name: str = "name"):
+    # TODO: Docstring (forgot what this function does)
     variable_name = variable_pattern.sub("_", attribute_name).lower()
     new_values = FilterList()
     old_items_dict = {getattr(item, variable_name): item for item in old_items}
@@ -55,16 +68,25 @@ class Base:
 
     @classmethod
     def parse(cls, item):
+        """
+        Parses incoming data by converting it into an object.
+        """
         return cls(**prepare_variables(item))
 
     def update_values(self, item):
+        """
+        Updates attributes instead of creating a new object every time.
+        :param item: new values
+        """
         self.commit_changes = dict()
         for name, value in prepare_variables(item).items():
             setattr(self, f"_{name}", value)
 
     def commit(self, force: bool = False):
-        # the actual update function has to be hid behind a function,
-        # so it can be transferred down to subsaves and whatnot.
+        """
+        Calls the commit callback, which can be set by the parent object.
+        :param force: if commit should be forced or not
+        """
         self.commit_callback(force)
 
 
@@ -73,10 +95,6 @@ class Active(Base):
         super().__init__()
         self._scenario_id = scenario_id
         self._scenario_name = scenario_name
-
-    def __repr__(self):
-        # TODO: Check if this repr is actually better than the one in the Base
-        return f"Active(scenario_id={self.scenario_id}, scenario_name={self.scenario_name})"
 
     @property
     def scenario_id(self) -> int:
@@ -148,11 +166,21 @@ class Save(Base):
         return self._sub_saves
 
     def load(self, force_commit=True):
+        """
+        Loads the Save.
+        :param force_commit: Default: `True`
+        """
         self.commit_changes["absolutePath"] = self.absolute_path
         self.commit(force_commit)
 
 
-def convert_type_value(_type: str, value: str):
+def convert_type_value(_type: str, value: str) -> Tuple[type, Union[bool, str, int, float]]:
+    """
+    Converts the values according to the given type.
+    :param _type: either "bool", "string", "int" or "float"
+    :param value: Input value
+    :returns: Converted value
+    """
     new_type = None
     new_value: Union[bool, str, int, float, None] = None
 
@@ -201,25 +229,35 @@ class Property(Base):
 
     @value.setter
     def value(self, value):
-        # automatically converts the value to the pre-set type
+        """
+        Automatically converts the value to the pre-set type
+        """
         self._value = self.type(value)
         self.commit_changes["value"] = json.dumps(self._value)
         self.commit_changes["name"] = self.name  # has to be included
         self.commit()
 
     @property
-    # min_value can only be an int, even if the actual value might be a bool due to an API limitation
     def min_value(self) -> int:
+        """
+        Can only be an int due to an API limitation, even if the actual value might be a bool
+        """
         return self._min_value
 
     @property
-    # max_value can only be an int, even if the actual value might be a bool due to an API limitation
     def max_value(self) -> int:
+        """
+        Can only be an int due to an API limitation, even if the actual value might be a bool
+        """
+
         return self._max_value
 
     @property
-    # step_size can only be an int, even if the actual value might be a bool due to an API limitation
     def step_size(self) -> int:
+        """
+        Can only be an int due to an API limitation, even if the actual value might be a bool
+        """
+
         return self._step_size
 
 
