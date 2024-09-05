@@ -18,6 +18,7 @@ def prepare_variables(item: dict) -> dict:
 def commit(force: bool = False):
     """
     Default callback function. Should not get triggered at any point.
+    :param force: If set to True, it will trigger a force commit.
     """
     raise NotImplementedError(f"commit(force={force}) needs to be replaced by a function")
 
@@ -26,7 +27,7 @@ def check_updates(items: List["Base"]):
     """
     Collects all commit changes.
     :param items: list of items to collect from
-    :returns: commit changes
+    :returns: A FilterList of commit changes.
     """
     commit_changes = FilterList()
     for item in items:
@@ -36,7 +37,14 @@ def check_updates(items: List["Base"]):
 
 
 def get_updated_values(old_items: List["Base"], new_items: list, object_parser, attribute_name: str = "name"):
-    # TODO: Docstring (forgot what this function does)
+    """
+    Updates a list of existing items based on new input data, mapping by a specific attribute.
+    :param old_items: A list of existing objects to be updated.
+    :param new_items: A list of dictionaries or objects containing new data.
+    :param object_parser: A function to parse and create new objects when an existing one cannot be found.
+    :param attribute_name: The attribute used to identify and match objects between old and new items. Defaults to "name".
+    :returns: A FilterList of updated objects, including new ones parsed from the input data.
+    """
     variable_name = variable_pattern.sub("_", attribute_name).lower()
     new_values = FilterList()
     old_items_dict = {getattr(item, variable_name): item for item in old_items}
@@ -174,7 +182,7 @@ class Save(Base):
         self.commit(force_commit)
 
 
-def convert_type_value(_type: str, value: str) -> Tuple[type, Union[bool, str, int, float]]:
+def convert_type_value(_type: str, value: str) -> Tuple[type, Union[bool, str, int, float, None]]:
     """
     Converts the values according to the given type.
     :param _type: either "bool", "string", "int" or "float"
@@ -182,7 +190,7 @@ def convert_type_value(_type: str, value: str) -> Tuple[type, Union[bool, str, i
     :returns: Converted value
     """
     new_type = None
-    new_value: Union[bool, str, int, float, None] = None
+    new_value = None
 
     if _type == "bool":
         new_type = bool
