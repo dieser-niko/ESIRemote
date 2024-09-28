@@ -139,6 +139,20 @@ class ESIRemote:
         self._commit_operator_actors()
         self.update_operator_actors()
 
+    def load_save_path(self, path):
+        """
+        Loads a save that is not listed in the save list.
+
+        :param path: Path to save file (.json)
+        """
+        save = Save(scenario_id=-1,
+                    scenario_name="",
+                    sub_saves=[],
+                    category_name="",
+                    absolute_path=path)
+        save.commit_callback = self._commit_save
+        save.load()
+
 
 def value_timer(start, end, seconds):
     """
