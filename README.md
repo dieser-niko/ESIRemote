@@ -59,15 +59,17 @@ This little example lists all elements available.
 ---
 <details><summary>TODO list</summary>
 
-- [ ] Add more docstrings and comments
+- [ ] Documentation
+  - [x] Docstrings and comments
+  - [ ] Overall documentation
 - [x] Add more to readme (stuff like installation and usage)
 - [x] Add more helper functions (like search by ID, name, type, etc)
   - Maybe do something like a custom list object with a function called "search_by_attribute" or something
 - [ ] remove test code
 - [ ] add some examples (and maybe supply scenes)
-- [ ] make sure it works flawlessly (check the models especially)
+- [x] make sure it works flawlessly (check the models especially)
 - [x] add `setup.py` or `pyproject.toml`
 - [x] publish to PyPi with GH Actions
 - [ ] add unittests
-- [ ] Feature: load external save file (might not work at all)
+- [x] Feature: load external save file
 </details>
